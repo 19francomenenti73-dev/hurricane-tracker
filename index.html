@@ -10,16 +10,26 @@
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    /* FIX CRITICO: Forza altezza e larghezza piena ed evita il collasso su mobile */
     html, body { 
       width: 100%; 
-      height: 100%; 
+      height: 100vh; 
       background: #0f172a; 
       color: #fff; 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      overflow: hidden; 
+      margin: 0;
+      padding: 0;
     }
     
-    #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+    #map { 
+      width: 100%; 
+      height: 100vh; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      z-index: 1; 
+    }
     
     /* Header Overlay */
     .tracker-header {
@@ -43,7 +53,7 @@
       bottom: 12px;
       right: 12px;
       z-index: 1000;
-      max-width: 300px;
+      max-width: 280px;
       background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -72,7 +82,7 @@
 
   <div class="tracker-header">
     <h1>Global Tropical Storm Tracker</h1>
-    <p>Nowcasting Italia - Official NOAA Public Domain Feed</p>
+    <p>Nowcasting Italia - NOAA Public Domain</p>
   </div>
 
   <div class="tracker-bottom-panel">
@@ -82,8 +92,8 @@
     </div>
     
     <div class="tracker-disclaimer">
-      <span>Dati & Crediti:</span> U.S. NOAA / National Hurricane Center (Pubblico Dominio).<br>
-      <span>Disclaimer:</span> Mappa a scopo informativo e di ricerca. Per le allerte ufficiali fare riferimento agli enti di Protezione Civile preposti.
+      <span>Crediti:</span> U.S. NOAA / NHC.<br>
+      <span>Disclaimer:</span> Scopo informativo/ricerca. Per allerte ufficiali riferirsi alla Protezione Civile.
     </div>
   </div>
 
@@ -93,30 +103,31 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // 1. Inizializzazione della mappa
+    // Inizializzazione sicura della mappa
     const map = L.map('map', {
       center: [25.0, -50.0],
       zoom: 3,
       worldCopyJump: true
     });
 
-    // 2. Base map scura CARTO
+    // Mappa di sfondo CARTO Dark
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
 
-    // 3. Layer WMS ufficiale NOAA / NHC (non soffre di blocchi CORS e carica sempre le immagini raster ufficiali)
-    const nhcWmsLayer = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/wwa_meteo_cyclones_longterm_fcst_time/MapServer/WMSServer', {
+    // Layer WMS NOAA
+    L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/wwa_meteo_cyclones_longterm_fcst_time/MapServer/WMSServer', {
       layers: '1,2,3,4,5',
       format: 'image/png',
       transparent: true,
       attribution: 'NOAA / National Hurricane Center',
       opacity: 0.85
-    });
+    }).addTo(map);
 
-    nhcWmsLayer.addTo(map);
+    // Forza il ricalcolo delle dimensioni della mappa dopo il caricamento mobile
+    setTimeout(() => { map.invalidateSize(); }, 200);
   </script>
 </body>
 </html>
