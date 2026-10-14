@@ -10,7 +10,14 @@
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 650px; background: #0f172a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+    html, body { 
+      width: 100%; 
+      height: 100%; 
+      background: #0f172a; 
+      color: #fff; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      overflow: hidden; 
+    }
     
     #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
     
@@ -30,62 +37,15 @@
     .tracker-header h1 { font-size: 13px; font-weight: 700; color: #38bdf8; margin-bottom: 2px; }
     .tracker-header p { font-size: 9px; color: #94a3b8; }
 
-    /* Legenda ufficiale */
-    .tracker-legend {
+    /* Pannello Legenda & Crediti/Disclaimer in basso */
+    .tracker-bottom-panel {
       position: absolute;
       bottom: 12px;
       right: 12px;
       z-index: 1000;
+      max-width: 320px;
       background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 9px;
-    }
-    .legend-title { font-weight: bold; color: #38bdf8; margin-bottom: 4px; }
-    .legend-item { display: flex; align-items: center; margin-top: 2px; color: #cbd5e1; }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #ef4444; }
-  </style>
-</head>
-<body>
-
-  <div class="tracker-header">
-    <h1>Global Tropical Storm Tracker</h1>
-    <p>Data Source: NOAA / NHC (Public Domain)</p>
-  </div>
-
-  <div class="tracker-legend">
-    <div class="legend-title">Layer Ufficiali</div>
-    <div class="legend-item"><div class="legend-dot"></div>NOAA NHC Tropical Weather</div>
-  </div>
-
-  <div id="map"></div>
-
-  <!-- Leaflet JS (Open Source) -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script>
-    // Inizializzazione della mappa centrata sull'Atlantico/Pacifico (bacini monitorati dal NHC)
-    const map = L.map('map', {
-      center: [25.0, -50.0],
-      zoom: 3,
-      worldCopyJump: true
-    });
-
-    // Base map scura di sfondo (CartoDB / OpenStreetMap - Open Source)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
-
-    // Layer ufficiale NOAA MapServer (Pubblico Dominio - Tracciamento Cicloni Tropicali NHC)
-    const noaaTropicalLayer = L.tileLayer('https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'U.S. National Oceanic and Atmospheric Administration (NOAA / NHC)',
-      maxZoom: 10,
-      opacity: 0.85
-    }).addTo(map);
-  </script>
-</body>
-</html>
+      padding: 8
+      
