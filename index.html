@@ -11,7 +11,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    /* FIX CRITICO: Forza altezza e larghezza piena ed evita il collasso su mobile */
     html, body { 
       width: 100%; 
       height: 100vh; 
@@ -20,6 +19,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
     
     #map { 
@@ -103,18 +103,17 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inizializzazione sicura della mappa
+    // Inizializzazione della mappa
     const map = L.map('map', {
       center: [25.0, -50.0],
       zoom: 3,
       worldCopyJump: true
     });
 
-    // Mappa di sfondo CARTO Dark
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
+    // Mappa di sfondo scura Esri (Gratuita, senza API Key)
+    L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      maxZoom: 16
     }).addTo(map);
 
     // Layer WMS NOAA
@@ -126,7 +125,7 @@
       opacity: 0.85
     }).addTo(map);
 
-    // Forza il ricalcolo delle dimensioni della mappa dopo il caricamento mobile
+    // Ricalcolo dimensioni per mobile
     setTimeout(() => { map.invalidateSize(); }, 200);
   </script>
 </body>
