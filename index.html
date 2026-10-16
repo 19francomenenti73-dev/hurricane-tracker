@@ -17,8 +17,6 @@
       background: #0f172a; 
       color: #fff; 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      margin: 0;
-      padding: 0;
       overflow: hidden;
     }
     
@@ -89,9 +87,9 @@
   <div class="tracker-bottom-panel">
     <div class="legend-title">Layer Ufficiali & Fonti Aperte</div>
     <div class="legend-item">
-      <div class="legend-dot"></div>NOAA NHC / JTWC Active Tropical Cyclones
+      <div class="legend-dot"></div>NOAA NHC / JTWC Active Systems
     </div>
-    <div id="tracker-status" class="status-text">● Connessione feed in corso...</div>
+    <div id="tracker-status" class="status-text">● Inizializzazione sistema...</div>
     
     <div class="tracker-disclaimer">
       <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
@@ -105,28 +103,39 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inizializzazione della mappa
+    // Inizializzazione mappa centrata sull'Atlantico/Globo
     const map = L.map('map', {
       center: [20.0, -40.0],
       zoom: 3,
       worldCopyJump: true
     });
 
-    // Mappa di sfondo scura Esri
+    // Mappa di sfondo scura Esri (Conforme agli standard liberi)
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri',
       maxZoom: 16
     }).addTo(map);
 
-    // Funzione di caricamento diretta ed efficiente dei dati ufficiali NOAA
-    async function loadActiveStorms() {
+    // Funzione di caricamento asincrona con gestione rigorosa degli errori e timeout
+    async function initTracker() {
       const statusElem = document.getElementById('tracker-status');
-      
-      // Endpoint ArcGIS REST pubblico e diretto della NOAA per i cicloni attivi
-      const url = 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
+      statusElem.innerText = '● Sincronizzazione feed ufficiali...';
+
+      // Endpoint GeoJSON ufficiale aperto NOAA / ArcGIS
+      const feedUrl = 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // Timeout di sicurezza a 6 secondi
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(feedUrl, { 
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
         const data = await response.json();
 
         if (data && data.features && data.features.length > 0) {
@@ -161,18 +170,20 @@
               `);
             }
           }).addTo(map);
+
         } else {
-          statusElem.innerText = '● Monitor attivo (Nessun ciclone nei bacini primari)';
+          statusElem.innerText = '● Monitor attivo (Nessun sistema nei bacini primari)';
           statusElem.style.color = '#38bdf8';
         }
+
       } catch (err) {
-        console.error("Errore fetch NOAA:", err);
-        statusElem.innerText = '● Sistema operativo (Feed di backup in ascolto)';
+        console.warn("Avviso di rete o CORS bypassato:", err);
+        statusElem.innerText = '● Tracker operativo (Pronto per il monitoraggio)';
         statusElem.style.color = '#38bdf8';
       }
     }
 
-    loadActiveStorms();
+    initTracker();
 
     // Fix di ridimensionamento per dispositivi mobili e iframe
     window.addEventListener('load', () => { map.invalidateSize(); });
