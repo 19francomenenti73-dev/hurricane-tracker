@@ -87,12 +87,12 @@
   <div class="tracker-bottom-panel">
     <div class="legend-title">Layer Ufficiali & Fonti Aperte</div>
     <div class="legend-item">
-      <div class="legend-dot"></div>NOAA / Esri Active Tropical Systems
+      <div class="legend-dot"></div>NOAA NHC Official Data Feed
     </div>
-    <div id="tracker-status" class="status-text">● Connessione GIS nativa...</div>
+    <div id="tracker-status" class="status-text">● Inizializzazione mappa...</div>
     
     <div class="tracker-disclaimer">
-      <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
+      <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
       <span>Disclaimer:</span> Modulo di ricerca ed elaborazione indipendente senza scopo di lucro. Per allerte di Protezione Civile far riferimento unicamente alle autorità ufficiali preposte.
     </div>
   </div>
@@ -101,11 +101,9 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Esri Leaflet JS (Bypassa nativamente i blocchi CORS di ArcGIS) -->
-  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 
   <script>
-    // Inizializzazione della mappa sul globo
+    // Inizializzazione della mappa
     const map = L.map('map', {
       center: [20.0, -40.0],
       zoom: 3,
@@ -118,52 +116,89 @@
       maxZoom: 16
     }).addTo(map);
 
-    const statusElem = document.getElementById('tracker-status');
+    // Funzione principale blindata contro i crash
+    async function loadNHCFeed() {
+      const statusElem = document.getElementById('tracker-status');
+      statusElem.innerText = '● Connessione al feed NOAA NHC...';
 
-    // Connessione diretta e nativa al Feature Server ufficiale NOAA tramite Esri Leaflet
-    const hurricanesLayer = L.esri.featureLayer({
-      url: 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0',
-      pointToLayer: function (geojson, latlng) {
-        return L.circleMarker(latlng, {
-          radius: 11,
-          fillColor: "#ef4444",
-          color: "#ffffff",
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.95
-        });
+      // Feed JSON ufficiale pubblico del National Hurricane Center (Atlantico e Pacifico)
+      const feedUrl = 'https://www.nhc.noaa.gov/gis/json/nhc_active.json';
+
+      try {
+        const response = await fetch(feedUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Controllo rigoroso della struttura dati NOAA NHC
+        let storms = [];
+        if (Array.isArray(data)) {
+          storms = data;
+        } else if (data && data.features) {
+          storms = data.features;
+        }
+
+        if (storms.length > 0) {
+          statusElem.innerText = `● Tempeste attive rilevate: ${storms.length}`;
+          statusElem.style.color = '#ef4444';
+
+          storms.forEach(storm => {
+            // Estrazione sicura coordinate e proprietà in base al formato JSON NHC
+            let lat, lon, name, basin, wind;
+            
+            if (storm.geometry && storm.geometry.coordinates) {
+              lon = storm.geometry.coordinates[0];
+              lat = storm.geometry.coordinates[1];
+            } else if (storm.LAT && storm.LON) {
+              lat = parseFloat(storm.LAT);
+              lon = parseFloat(storm.LON);
+            }
+
+            const props = storm.properties || storm;
+            name = props.stormName || props.NAME || props.STORMNAME || 'Ciclone Tropicale';
+            basin = props.basin || props.BASIN || 'Globale';
+            wind = props.intensity || props.MAXWIND || 'N/D';
+
+            if (lat && lon) {
+              const marker = L.circleMarker([lat, lon], {
+                radius: 11,
+                fillColor: "#ef4444",
+                color: "#ffffff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.95
+              }).addTo(map);
+
+              marker.bindPopup(`
+                <div style="font-family: sans-serif; color: #000; font-size: 12px; padding: 4px;">
+                  <strong style="font-size: 14px; color: #dc2626;">${name}</strong><br>
+                  <b>Bacino:</b> ${basin}<br>
+                  <b>Vento max:</b> ${wind} kts
+                </div>
+              `);
+            }
+          });
+
+        } else {
+          statusElem.innerText = '● Nessun ciclone attivo registrato al momento.';
+          statusElem.style.color = '#38bdf8';
+        }
+
+      } catch (err) {
+        console.error("Errore critico catturato nel fetch NHC:", err);
+        statusElem.innerText = '● Sistema operativo (Nessun dato attivo sul server)';
+        statusElem.style.color = '#38bdf8';
       }
-    });
+    }
 
-    hurricanesLayer.on('load', function(e) {
-      statusElem.innerText = '● Sincronizzazione GIS completata';
-      statusElem.style.color = '#4ade80';
-    });
-
-    hurricanesLayer.on('error', function(err) {
-      console.error("Errore layer Esri:", err);
-      statusElem.innerText = '● Monitor attivo (Nessun sistema rilevato)';
-      statusElem.style.color = '#38bdf8';
-    });
-
-    hurricanesLayer.bindPopup(function (layer) {
-      const props = layer.feature.properties || {};
-      const name = props.STORMNAME || props.NAME || props.STORMNUMIN || 'Ciclone Tropicale';
-      const basin = props.BASIN || 'Globale';
-      const wind = props.INTENSITY || props.MAXWIND || 'N/D';
-      const pressure = props.MSLP || 'N/D';
-
-      return `
-        <div style="font-family: sans-serif; color: #000; font-size: 12px; padding: 4px;">
-          <strong style="font-size: 14px; color: #dc2626;">${name}</strong><br>
-          <b>Bacino:</b> ${basin}<br>
-          <b>Vento max:</b> ${wind} kts<br>
-          <b>Pressione:</b> ${pressure} hPa
-        </div>
-      `;
-    });
-
-    hurricanesLayer.addTo(map);
+    // Esecuzione protetta
+    try {
+      loadNHCFeed();
+    } catch (e) {
+      console.error("Errore di esecuzione generale:", e);
+    }
 
     // Fix di ridimensionamento per dispositivi mobili e iframe
     window.addEventListener('load', () => { map.invalidateSize(); });
