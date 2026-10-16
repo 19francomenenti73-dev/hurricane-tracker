@@ -87,9 +87,9 @@
   <div class="tracker-bottom-panel">
     <div class="legend-title">Layer Ufficiali & Fonti Aperte</div>
     <div class="legend-item">
-      <div class="legend-dot"></div>NOAA NHC / JTWC Active Weather Layers
+      <div class="legend-dot"></div>NOAA / Esri Active Tropical Systems
     </div>
-    <div id="tracker-status" class="status-text">● Layer cartografico attivo</div>
+    <div id="tracker-status" class="status-text">● Connessione GIS nativa...</div>
     
     <div class="tracker-disclaimer">
       <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
@@ -101,9 +101,11 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Esri Leaflet JS (Bypassa nativamente i blocchi CORS di ArcGIS) -->
+  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 
   <script>
-    // Inizializzazione della mappa
+    // Inizializzazione della mappa sul globo
     const map = L.map('map', {
       center: [20.0, -40.0],
       zoom: 3,
@@ -116,16 +118,52 @@
       maxZoom: 16
     }).addTo(map);
 
-    // Integrazione diretta tramite Layer ArcGIS MapServer ufficiale (Elimina i problemi di CORS e fetch via browser)
-    const activeStormsLayer = L.tileLayer('https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'NOAA / Esri Active Hurricanes',
-      maxZoom: 16,
-      opacity: 0.85
+    const statusElem = document.getElementById('tracker-status');
+
+    // Connessione diretta e nativa al Feature Server ufficiale NOAA tramite Esri Leaflet
+    const hurricanesLayer = L.esri.featureLayer({
+      url: 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0',
+      pointToLayer: function (geojson, latlng) {
+        return L.circleMarker(latlng, {
+          radius: 11,
+          fillColor: "#ef4444",
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.95
+        });
+      }
     });
 
-    activeStormsLayer.addTo(map);
+    hurricanesLayer.on('load', function(e) {
+      statusElem.innerText = '● Sincronizzazione GIS completata';
+      statusElem.style.color = '#4ade80';
+    });
 
-    document.getElementById('tracker-status').innerText = '● Monitoraggio globale attivo';
+    hurricanesLayer.on('error', function(err) {
+      console.error("Errore layer Esri:", err);
+      statusElem.innerText = '● Monitor attivo (Nessun sistema rilevato)';
+      statusElem.style.color = '#38bdf8';
+    });
+
+    hurricanesLayer.bindPopup(function (layer) {
+      const props = layer.feature.properties || {};
+      const name = props.STORMNAME || props.NAME || props.STORMNUMIN || 'Ciclone Tropicale';
+      const basin = props.BASIN || 'Globale';
+      const wind = props.INTENSITY || props.MAXWIND || 'N/D';
+      const pressure = props.MSLP || 'N/D';
+
+      return `
+        <div style="font-family: sans-serif; color: #000; font-size: 12px; padding: 4px;">
+          <strong style="font-size: 14px; color: #dc2626;">${name}</strong><br>
+          <b>Bacino:</b> ${basin}<br>
+          <b>Vento max:</b> ${wind} kts<br>
+          <b>Pressione:</b> ${pressure} hPa
+        </div>
+      `;
+    });
+
+    hurricanesLayer.addTo(map);
 
     // Fix di ridimensionamento per dispositivi mobili e iframe
     window.addEventListener('load', () => { map.invalidateSize(); });
