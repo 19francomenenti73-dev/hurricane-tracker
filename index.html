@@ -3,78 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nowcasting Italia - Official Global Tropical Tracker</title>
+  <title>Nowcasting Italia - Global Tropical Tracker</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100vh; background: #0f172a; color: #fff; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
+    #map { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
     
-    html, body { 
-      width: 100%; 
-      height: 100vh; 
-      background: #0f172a; 
-      color: #fff; 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      overflow: hidden;
-    }
-    
-    #map { 
-      width: 100%; 
-      height: 100vh; 
-      position: absolute; 
-      top: 0; 
-      left: 0; 
-      z-index: 1; 
-    }
-    
-    /* Header Overlay */
     .tracker-header {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      position: absolute; top: 12px; left: 12px; z-index: 1000;
+      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15); padding: 8px 12px; border-radius: 8px;
     }
-    .tracker-header h1 { font-size: 13px; font-weight: 700; color: #38bdf8; margin-bottom: 2px; }
+    .tracker-header h1 { font-size: 13px; font-weight: 700; color: #38bdf8; }
     .tracker-header p { font-size: 9px; color: #94a3b8; }
 
-    /* Pannello Legenda & Crediti in basso */
-    .tracker-bottom-panel {
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
-      z-index: 1000;
-      max-width: 330px;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 9px;
-      color: #cbd5e1;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    .tracker-panel {
+      position: absolute; bottom: 12px; right: 12px; z-index: 1000; max-width: 320px;
+      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15); padding: 10px; border-radius: 8px; font-size: 9px; color: #cbd5e1;
     }
-    .legend-title { font-weight: bold; color: #38bdf8; margin-bottom: 4px; }
-    .legend-item { display: flex; align-items: center; margin-top: 2px; }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #ef4444; }
-    .status-text { font-size: 8.5px; color: #4ade80; margin-top: 4px; font-weight: 600; }
-    
-    .tracker-disclaimer {
-      margin-top: 6px;
-      padding-top: 6px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 8px;
-      line-height: 1.3;
-      color: #94a3b8;
-    }
-    .tracker-disclaimer span { color: #38bdf8; font-weight: 600; }
+    .status-text { font-size: 9px; font-weight: 600; margin-top: 4px; color: #38bdf8; }
   </style>
 </head>
 <body>
@@ -84,98 +36,80 @@
     <p>Nowcasting Italia — Real-Time Monitor</p>
   </div>
 
-  <div class="tracker-bottom-panel">
-    <div class="legend-title">Layer Ufficiali & Fonti Aperte</div>
-    <div class="legend-item">
-      <div class="legend-dot"></div>NOAA NHC / JTWC Active Systems
-    </div>
-    <div id="tracker-status" class="status-text">● Caricamento dati locali...</div>
-    
-    <div class="tracker-disclaimer">
-      <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
-      <span>Disclaimer:</span> Modulo di ricerca ed elaborazione indipendente senza scopo di lucro. Per allerte di Protezione Civile far riferimento unicamente alle autorità ufficiali preposte.
-    </div>
+  <div class="tracker-panel">
+    <div style="font-weight: bold; color: #38bdf8;">Fonte Dati: NOAA / NHC Official FeatureServer</div>
+    <div id="tracker-status" class="status-text">● Inizializzazione mappa...</div>
   </div>
 
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
+  <!-- Leaflet JS & Esri Leaflet -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 
   <script>
-    // Inizializzazione della mappa
-    const map = L.map('map', {
-      center: [20.0, -40.0],
-      zoom: 3,
-      worldCopyJump: true
-    });
+    // Inizializzazione mappa
+    const map = L.map('map', { center: [20.0, -40.0], zoom: 3, worldCopyJump: true });
 
-    // Mappa di sfondo scura Esri
+    // Base map Esri Scuro
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri',
-      maxZoom: 16
+      attribution: 'Tiles &copy; Esri', maxZoom: 16
     }).addTo(map);
 
-    // Caricamento sicuro del file storms.json locale generato dall'Action
-    async function loadLocalStorms() {
-      const statusElem = document.getElementById('tracker-status');
-      
-      try {
-        const response = await fetch('./storms.json?t=' + new Date().getTime());
-        if (!response.ok) throw new Error('File dati non disponibile');
+    const statusElem = document.getElementById('tracker-status');
 
-        const data = await response.json();
+    // Query diretta e protetta al FeatureServer NOAA
+    try {
+      L.esri.query({
+        url: 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0'
+      }).run(function (error, featureCollection) {
+        if (error) {
+          console.warn("Avviso connessione dati:", error);
+          statusElem.innerText = "● Monitor attivo (Server NOAA momentaneamente non raggiungibile)";
+          statusElem.style.color = "#f59e0b";
+          return;
+        }
 
-        if (data && data.features && data.features.length > 0) {
-          statusElem.innerText = `● Sistemi attivi tracciati: ${data.features.length}`;
-          statusElem.style.color = '#ef4444';
+        const count = (featureCollection && featureCollection.features) ? featureCollection.features.length : 0;
 
-          L.geoJSON(data, {
+        if (count > 0) {
+          statusElem.innerText = `● Cicloni/Tempeste attive rilevate: ${count}`;
+          statusElem.style.color = "#ef4444";
+
+          L.geoJSON(featureCollection, {
             pointToLayer: function (feature, latlng) {
               return L.circleMarker(latlng, {
-                radius: 11,
-                fillColor: "#ef4444",
-                color: "#ffffff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.95
+                radius: 9, fillColor: "#ef4444", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.9
               });
             },
             onEachFeature: function (feature, layer) {
-              const props = feature.properties || {};
-              const name = props.STORMNAME || props.NAME || props.STORMNUMIN || 'Ciclone Tropicale';
-              const basin = props.BASIN || 'Globale';
-              const wind = props.INTENSITY || props.MAXWIND || 'N/D';
-              const pressure = props.MSLP || 'N/D';
+              const p = feature.properties || {};
+              const name = p.STORMNAME || p.NAME || 'SISTEMA TROPICALE';
+              const intensity = p.INTENSITY || p.MAXWIND || 'N/D';
+              const pressure = p.MSLP || 'N/D';
 
               layer.bindPopup(`
-                <div style="font-family: sans-serif; color: #000; font-size: 12px; padding: 4px;">
-                  <strong style="font-size: 14px; color: #dc2626;">${name}</strong><br>
-                  <b>Bacino:</b> ${basin}<br>
-                  <b>Vento max:</b> ${wind} kts<br>
+                <div style="color: #000; font-size: 11px;">
+                  <strong style="font-size: 13px; color: #dc2626;">${name}</strong><br>
+                  <b>Vento max:</b> ${intensity} kts<br>
                   <b>Pressione:</b> ${pressure} hPa
                 </div>
               `);
             }
           }).addTo(map);
-
         } else {
-          statusElem.innerText = '● Monitor attivo (Nessun ciclone attivo registrato)';
-          statusElem.style.color = '#38bdf8';
+          statusElem.innerText = "● Monitor attivo (Nessun ciclone tropicale attivo al momento)";
+          statusElem.style.color = "#4ade80";
         }
-      } catch (err) {
-        console.warn("Errore lettura file locale:", err);
-        statusElem.innerText = '● Tracker operativo (In attesa del primo sync)';
-        statusElem.style.color = '#38bdf8';
-      }
+      });
+    } catch (e) {
+      console.error("Eccezione di caricamento:", e);
+      statusElem.innerText = "● Errore di caricamento del modulo";
+      statusElem.style.color = "#ef4444";
     }
 
-    loadLocalStorms();
-
-    // Fix di ridimensionamento per dispositivi mobili e iframe
-    window.addEventListener('load', () => { map.invalidateSize(); });
-    setTimeout(() => { map.invalidateSize(); }, 300);
-    setTimeout(() => { map.invalidateSize(); }, 1000);
+    // Resize di sicurezza
+    setTimeout(() => { map.invalidateSize(); }, 500);
   </script>
 </body>
 </html>
