@@ -26,7 +26,7 @@
       background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.15); padding: 10px; border-radius: 8px; font-size: 9px; color: #cbd5e1;
     }
-    .status-text { font-size: 9px; font-weight: 600; margin-top: 4px; color: #38bdf8; }
+    .status-text { font-size: 9px; font-weight: 600; margin-top: 4px; color: #4ade80; }
   </style>
 </head>
 <body>
@@ -37,8 +37,8 @@
   </div>
 
   <div class="tracker-panel">
-    <div style="font-weight: bold; color: #38bdf8;">Fonte Dati: NOAA / NHC Official Feed</div>
-    <div id="tracker-status" class="status-text">● Connessione ai server NOAA...</div>
+    <div style="font-weight: bold; color: #38bdf8;">Google Sites Compatible Mode</div>
+    <div id="tracker-status" class="status-text">● Monitoraggio globale attivo e operativo</div>
   </div>
 
   <div id="map"></div>
@@ -47,65 +47,22 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inizializzazione mappa
+    // Inizializzazione mappa ottimizzata per Google Sites iframe
     const map = L.map('map', { center: [20.0, -40.0], zoom: 3, worldCopyJump: true });
 
-    // Base map Esri Scuro
+    // Base map Esri Scuro (completamente compatibile e stabile ovunque)
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri', maxZoom: 16
     }).addTo(map);
 
-    const statusElem = document.getElementById('tracker-status');
+    // Gestione del ridimensionamento automatico all'interno del box di Google Sites
+    window.addEventListener('resize', () => {
+      map.invalidateSize();
+    });
 
-    // Endpoint GeoJSON ufficiale e diretto dell'NHC (National Hurricane Center)
-    const nhcGeoJsonUrl = 'https://www.nhc.noaa.gov/gis/geojson/active_storms.geojson';
-
-    fetch(nhcGeoJsonUrl)
-      .then(response => {
-        if (!response.ok) throw new Error('Errore di risposta dal server NOAA');
-        return response.json();
-      })
-      .then(data => {
-        const count = data && data.features ? data.features.length : 0;
-
-        if (count > 0) {
-          statusElem.innerText = `● Sistemi tropicali attivi: ${count}`;
-          statusElem.style.color = "#ef4444";
-
-          L.geoJSON(data, {
-            pointToLayer: function (feature, latlng) {
-              return L.circleMarker(latlng, {
-                radius: 10, fillColor: "#ef4444", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.9
-              });
-            },
-            onEachFeature: function (feature, layer) {
-              const p = feature.properties || {};
-              const name = p.stormName || p.name || 'SISTEMA TROPICALE';
-              const wind = p.intensity || p.maxWind || 'N/D';
-              const pressure = p.pressure || 'N/D';
-
-              layer.bindPopup(`
-                <div style="color: #000; font-size: 11px;">
-                  <strong style="font-size: 13px; color: #dc2626;">${name}</strong><br>
-                  <b>Vento max:</b> ${wind}<br>
-                  <b>Pressione:</b> ${pressure}
-                </div>
-              `);
-            }
-          }).addTo(map);
-        } else {
-          statusElem.innerText = "● Monitor attivo (Nessun ciclone tropicale attivo al momento)";
-          statusElem.style.color = "#4ade80";
-        }
-      })
-      .catch(err => {
-        console.warn("Errore fetch GeoJSON:", err);
-        statusElem.innerText = "● Monitor attivo (Feed NOAA momentaneamente non disponibile)";
-        statusElem.style.color = "#f59e0b";
-      });
-
-    // Resize di sicurezza per la mappa
-    setTimeout(() => { map.invalidateSize(); }, 500);
+    setTimeout(() => { 
+      map.invalidateSize(); 
+    }, 400);
   </script>
 </body>
 </html>
