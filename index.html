@@ -37,15 +37,14 @@
   </div>
 
   <div class="tracker-panel">
-    <div style="font-weight: bold; color: #38bdf8;">Fonte Dati: NOAA / NHC Official FeatureServer</div>
-    <div id="tracker-status" class="status-text">● Inizializzazione mappa...</div>
+    <div style="font-weight: bold; color: #38bdf8;">Fonte Dati: NOAA / NHC Official Feed</div>
+    <div id="tracker-status" class="status-text">● Connessione ai server NOAA...</div>
   </div>
 
   <div id="map"></div>
 
-  <!-- Leaflet JS & Esri Leaflet -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 
   <script>
     // Inizializzazione mappa
@@ -58,41 +57,38 @@
 
     const statusElem = document.getElementById('tracker-status');
 
-    // Query diretta e protetta al FeatureServer NOAA
-    try {
-      L.esri.query({
-        url: 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0'
-      }).run(function (error, featureCollection) {
-        if (error) {
-          console.warn("Avviso connessione dati:", error);
-          statusElem.innerText = "● Monitor attivo (Server NOAA momentaneamente non raggiungibile)";
-          statusElem.style.color = "#f59e0b";
-          return;
-        }
+    // Endpoint GeoJSON ufficiale e diretto dell'NHC (National Hurricane Center)
+    const nhcGeoJsonUrl = 'https://www.nhc.noaa.gov/gis/geojson/active_storms.geojson';
 
-        const count = (featureCollection && featureCollection.features) ? featureCollection.features.length : 0;
+    fetch(nhcGeoJsonUrl)
+      .then(response => {
+        if (!response.ok) throw new Error('Errore di risposta dal server NOAA');
+        return response.json();
+      })
+      .then(data => {
+        const count = data && data.features ? data.features.length : 0;
 
         if (count > 0) {
-          statusElem.innerText = `● Cicloni/Tempeste attive rilevate: ${count}`;
+          statusElem.innerText = `● Sistemi tropicali attivi: ${count}`;
           statusElem.style.color = "#ef4444";
 
-          L.geoJSON(featureCollection, {
+          L.geoJSON(data, {
             pointToLayer: function (feature, latlng) {
               return L.circleMarker(latlng, {
-                radius: 9, fillColor: "#ef4444", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.9
+                radius: 10, fillColor: "#ef4444", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.9
               });
             },
             onEachFeature: function (feature, layer) {
               const p = feature.properties || {};
-              const name = p.STORMNAME || p.NAME || 'SISTEMA TROPICALE';
-              const intensity = p.INTENSITY || p.MAXWIND || 'N/D';
-              const pressure = p.MSLP || 'N/D';
+              const name = p.stormName || p.name || 'SISTEMA TROPICALE';
+              const wind = p.intensity || p.maxWind || 'N/D';
+              const pressure = p.pressure || 'N/D';
 
               layer.bindPopup(`
                 <div style="color: #000; font-size: 11px;">
                   <strong style="font-size: 13px; color: #dc2626;">${name}</strong><br>
-                  <b>Vento max:</b> ${intensity} kts<br>
-                  <b>Pressione:</b> ${pressure} hPa
+                  <b>Vento max:</b> ${wind}<br>
+                  <b>Pressione:</b> ${pressure}
                 </div>
               `);
             }
@@ -101,14 +97,14 @@
           statusElem.innerText = "● Monitor attivo (Nessun ciclone tropicale attivo al momento)";
           statusElem.style.color = "#4ade80";
         }
+      })
+      .catch(err => {
+        console.warn("Errore fetch GeoJSON:", err);
+        statusElem.innerText = "● Monitor attivo (Feed NOAA momentaneamente non disponibile)";
+        statusElem.style.color = "#f59e0b";
       });
-    } catch (e) {
-      console.error("Eccezione di caricamento:", e);
-      statusElem.innerText = "● Errore di caricamento del modulo";
-      statusElem.style.color = "#ef4444";
-    }
 
-    // Resize di sicurezza
+    // Resize di sicurezza per la mappa
     setTimeout(() => { map.invalidateSize(); }, 500);
   </script>
 </body>
