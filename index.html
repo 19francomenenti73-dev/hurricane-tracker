@@ -103,54 +103,58 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inizializzazione della mappa
+    // Inizializzazione mappa
     const map = L.map('map', {
       center: [25.0, -50.0],
       zoom: 3,
       worldCopyJump: true
     });
 
-    // Mappa di sfondo scura Esri (Gratuita, senza API Key)
+    // Sfondo Scuro Esri
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri, DeLorme, NAVTEQ',
+      attribution: 'Tiles &copy; Esri',
       maxZoom: 16
     }).addTo(map);
 
-    // Caricamento in tempo reale del feed GeoJSON ufficiale NOAA NHC
-    fetch('https://www.nhc.noaa.gov/gis/kml/nhc_active.geojson')
-      .then(response => {
-        if (!response.ok) throw new Error("Errore nel recupero dati NOAA");
-        return response.json();
-      })
+    // Caricamento dati via ArcGIS REST Service NOAA (Nessun blocco CORS)
+    const noaaArcGisUrl = 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
+
+    fetch(noaaArcGisUrl)
+      .then(res => res.json())
       .then(data => {
-        L.geoJSON(data, {
-          pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, {
-              radius: 8,
-              fillColor: "#ef4444",
-              color: "#ffffff",
-              weight: 2,
-              opacity: 1,
-              fillOpacity: 0.85
-            });
-          },
-          onEachFeature: function (feature, layer) {
-            if (feature.properties && feature.properties.name) {
+        if (data && data.features && data.features.length > 0) {
+          L.geoJSON(data, {
+            pointToLayer: function (feature, latlng) {
+              return L.circleMarker(latlng, {
+                radius: 9,
+                fillColor: "#ef4444",
+                color: "#ffffff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+              });
+            },
+            onEachFeature: function (feature, layer) {
+              const props = feature.properties || {};
+              const name = props.STORMNAME || props.STORMNAME_UPPER || 'Ciclone Tropicale';
+              const intensity = props.INTENSITY || props.MAXWIND || 'N/D';
+              const pressure = props.MSLP || 'N/D';
+
               layer.bindPopup(`
-                <div style="font-family: sans-serif; color: #000; font-size: 12px;">
-                  <strong>${feature.properties.name}</strong><br>
-                  ${feature.properties.description || 'Nessun dettaglio aggiuntivo'}
+                <div style="font-family: sans-serif; color: #000; font-size: 12px; padding: 4px;">
+                  <strong style="font-size: 14px; color: #dc2626;">${name}</strong><br>
+                  <b>Vento max:</b> ${intensity} kts<br>
+                  <b>Pressione:</b> ${pressure} hPa
                 </div>
               `);
             }
-          }
-        }).addTo(map);
+          }).addTo(map);
+        } else {
+          console.log("Nessun ciclone attivo rilevato al momento dai satelliti NOAA.");
+        }
       })
-      .catch(err => {
-        console.warn("Nessun ciclone attivo o feed temporaneamente non raggiungibile:", err);
-      });
+      .catch(err => console.error("Errore recupero layer NOAA:", err));
 
-    // Ricalcolo dimensioni per mobile
     setTimeout(() => { map.invalidateSize(); }, 200);
   </script>
 </body>
