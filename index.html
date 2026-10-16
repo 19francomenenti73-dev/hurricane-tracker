@@ -91,7 +91,7 @@
     <div class="legend-item">
       <div class="legend-dot"></div>NOAA NHC / JTWC Active Tropical Cyclones
     </div>
-    <div id="tracker-status" class="status-text">● Sincronizzazione feed ufficiali...</div>
+    <div id="tracker-status" class="status-text">● Inizializzazione mappa...</div>
     
     <div class="tracker-disclaimer">
       <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
@@ -112,15 +112,17 @@
       worldCopyJump: true
     });
 
-    // Mappa di sfondo scura Esri (Conforme agli standard liberi)
+    // Mappa di sfondo scura Esri
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri',
       maxZoom: 16
     }).addTo(map);
 
-    // Caricamento diretto via endpoint ArcGIS REST pubblico NOAA (Nessun token/API key richiesta)
+    // Funzione di caricamento dati ufficiale NOAA / Esri FeatureServer
     async function loadOfficialHurricanes() {
       const statusElem = document.getElementById('tracker-status');
+      statusElem.innerText = '● Connessione ai server NOAA...';
+      
       const url = 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
 
       try {
@@ -166,14 +168,19 @@
         }
       } catch (err) {
         console.error("Errore di connessione al feed NOAA:", err);
-        statusElem.innerText = '⚠️ In attesa di risposta dal server ufficiale...';
+        statusElem.innerText = '⚠️ Errore di connessione al server.';
         statusElem.style.color = '#facc15';
       }
     }
 
     loadOfficialHurricanes();
 
-    setTimeout(() => { map.invalidateSize(); }, 200);
+    // Fix immediato per il rendering della mappa all'interno di iframe e smartphone
+    window.addEventListener('load', () => {
+      map.invalidateSize();
+    });
+    setTimeout(() => { map.invalidateSize(); }, 300);
+    setTimeout(() => { map.invalidateSize(); }, 1000);
   </script>
 </body>
 </html>
