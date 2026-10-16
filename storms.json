@@ -1,4 +1,5 @@
 {
-  "type": "FeatureCollection",
-  "features": []
+  "status": "success",
+  "count": 0,
+  "storms": []
 }
