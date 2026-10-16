@@ -87,12 +87,12 @@
   <div class="tracker-bottom-panel">
     <div class="legend-title">Layer Ufficiali & Fonti Aperte</div>
     <div class="legend-item">
-      <div class="legend-dot"></div>NOAA NHC / JTWC Active Systems
+      <div class="legend-dot"></div>GDACS / NOAA Active Tropical Systems
     </div>
-    <div id="tracker-status" class="status-text">● Inizializzazione sistema...</div>
+    <div id="tracker-status" class="status-text">● Connessione feed globale...</div>
     
     <div class="tracker-disclaimer">
-      <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
+      <span>Crediti Ufficiali:</span> GDACS, U.S. NOAA & JTWC Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
       <span>Disclaimer:</span> Modulo di ricerca ed elaborazione indipendente senza scopo di lucro. Per allerte di Protezione Civile far riferimento unicamente alle autorità ufficiali preposte.
     </div>
   </div>
@@ -103,38 +103,29 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inizializzazione mappa centrata sull'Atlantico/Globo
+    // Inizializzazione della mappa
     const map = L.map('map', {
       center: [20.0, -40.0],
       zoom: 3,
       worldCopyJump: true
     });
 
-    // Mappa di sfondo scura Esri (Conforme agli standard liberi)
+    // Mappa di sfondo scura Esri
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri',
       maxZoom: 16
     }).addTo(map);
 
-    // Funzione di caricamento asincrona con gestione rigorosa degli errori e timeout
-    async function initTracker() {
+    // Funzione reale di caricamento dati con feed CORS compatibile
+    async function loadRealStorms() {
       const statusElem = document.getElementById('tracker-status');
-      statusElem.innerText = '● Sincronizzazione feed ufficiali...';
-
-      // Endpoint GeoJSON ufficiale aperto NOAA / ArcGIS
-      const feedUrl = 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000); // Timeout di sicurezza a 6 secondi
+      
+      // Utilizziamo il feed GeoJSON globale di GDACS che supporta le richieste dirette dal browser
+      const feedUrl = 'https://www.gdacs.org/xml/rss_tc_georss.geojson';
 
       try {
-        const response = await fetch(feedUrl, { 
-          signal: controller.signal,
-          headers: { 'Accept': 'application/json' }
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await fetch(feedUrl);
+        if (!response.ok) throw new Error('Errore HTTP nel recupero dati');
 
         const data = await response.json();
 
@@ -155,35 +146,31 @@
             },
             onEachFeature: function (feature, layer) {
               const props = feature.properties || {};
-              const name = props.STORMNAME || props.NAME || props.STORMNUMIN || 'Ciclone Tropicale';
-              const basin = props.BASIN || 'Globale';
-              const wind = props.INTENSITY || props.MAXWIND || 'N/D';
-              const pressure = props.MSLP || 'N/D';
+              const name = props.eventname || props.name || 'Ciclone Tropicale';
+              const level = props.alertlevel || 'Monitoraggio';
+              const region = props.country || 'Area oceanica';
 
               layer.bindPopup(`
                 <div style="font-family: sans-serif; color: #000; font-size: 12px; padding: 4px;">
                   <strong style="font-size: 14px; color: #dc2626;">${name}</strong><br>
-                  <b>Bacino:</b> ${basin}<br>
-                  <b>Vento max:</b> ${wind} kts<br>
-                  <b>Pressione:</b> ${pressure} hPa
+                  <b>Allerta:</b> ${level}<br>
+                  <b>Regione:</b> ${region}
                 </div>
               `);
             }
           }).addTo(map);
-
         } else {
-          statusElem.innerText = '● Monitor attivo (Nessun sistema nei bacini primari)';
+          statusElem.innerText = '● Nessun ciclone attivo registrato al momento.';
           statusElem.style.color = '#38bdf8';
         }
-
       } catch (err) {
-        console.warn("Avviso di rete o CORS bypassato:", err);
-        statusElem.innerText = '● Tracker operativo (Pronto per il monitoraggio)';
-        statusElem.style.color = '#38bdf8';
+        console.error("Errore di caricamento:", err);
+        statusElem.innerText = '⚠️ Errore di connessione al feed globale.';
+        statusElem.style.color = '#facc15';
       }
     }
 
-    initTracker();
+    loadRealStorms();
 
     // Fix di ridimensionamento per dispositivi mobili e iframe
     window.addEventListener('load', () => { map.invalidateSize(); });
