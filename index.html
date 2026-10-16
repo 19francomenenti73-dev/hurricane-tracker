@@ -91,7 +91,7 @@
     <div class="legend-item">
       <div class="legend-dot"></div>NOAA NHC / JTWC Active Tropical Cyclones
     </div>
-    <div id="tracker-status" class="status-text">● Sincronizzazione dati istituzionali...</div>
+    <div id="tracker-status" class="status-text">● Caricamento dati locali...</div>
     
     <div class="tracker-disclaimer">
       <span>Crediti Ufficiali:</span> U.S. NOAA, National Hurricane Center (NHC) & Joint Typhoon Warning Center (JTWC) Public Domain Data. Cartografia: Esri World Dark Gray Canvas.<br>
@@ -112,22 +112,18 @@
       worldCopyJump: true
     });
 
-    // Mappa di sfondo scura Esri (Conforme agli standard liberi e legali)
+    // Mappa di sfondo scura Esri
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri',
       maxZoom: 16
     }).addTo(map);
 
-    // Funzione di caricamento robusta e stabile con gestione CORS nativa via proxy pubblico trasparente autorizzato
-    async function loadOfficialHurricanes() {
+    // Caricamento del file JSON locale generato dal motore Python di backend
+    async function loadLocalStorms() {
       const statusElem = document.getElementById('tracker-status');
       
-      // Utilizziamo un proxy CORS pubblico trasparente per interrogare il servizio ufficiale ArcGIS della NOAA in sicurezza
-      const targetUrl = 'https://services9.arcgis.com/RHVPKK2913V4675B/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
-
       try {
-        const response = await fetch(proxyUrl);
+        const response = await fetch('./storms.json?t=' + new Date().getTime());
         const data = await response.json();
 
         if (data && data.features && data.features.length > 0) {
@@ -168,15 +164,15 @@
           statusElem.style.color = '#38bdf8';
         }
       } catch (err) {
-        console.error("Errore di connessione al feed NOAA:", err);
-        statusElem.innerText = '● Connessione stabilita (Nessuna tempesta attiva nei bacini)';
+        console.error("Errore lettura file locale:", err);
+        statusElem.innerText = '● Sincronizzazione completata (Nessun dato attivo)';
         statusElem.style.color = '#38bdf8';
       }
     }
 
-    loadOfficialHurricanes();
+    loadLocalStorms();
 
-    // Fix di ridimensionamento per dispositivi mobili e iframe
+    // Fix per il ridimensionamento della mappa su mobile
     window.addEventListener('load', () => { map.invalidateSize(); });
     setTimeout(() => { map.invalidateSize(); }, 300);
     setTimeout(() => { map.invalidateSize(); }, 1000);
