@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#071522">
-  <title>Open Cyclone Tracker</title>
+  <title>Hurricane Tracker — NOAA/NHC</title>
 
   <link
     rel="stylesheet"
@@ -15,148 +16,291 @@
     :root {
       color-scheme: dark;
       --bg: #071522;
-      --panel: #102333;
-      --text: #eef6ff;
-      --muted: #a9bfd0;
-      --accent: #4cc9f0;
-      --border: #28475c;
+      --panel: #102536;
+      --line: #294355;
+      --text: #edf6ff;
+      --muted: #a9bfce;
+      --accent: #53d5f2;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: system-ui, Arial, sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     }
 
     header {
       padding: 16px;
       background: #0c2030;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--line);
     }
 
     h1 {
-      margin: 0 0 5px;
-      font-size: 1.35rem;
+      font-size: 22px;
+      margin: 0 0 6px;
     }
 
     .subtitle {
       color: var(--muted);
-      font-size: .85rem;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
-    .toolbar {
+    .statusbar {
       display: flex;
-      flex-wrap: wrap;
       gap: 8px;
-      padding: 12px;
-    }
-
-    button {
-      padding: 10px 13px;
-      color: var(--text);
-      background: #17364b;
-      border: 1px solid #3b627b;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    button:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-
-    #status {
-      margin: 0 12px 10px;
+      flex-wrap: wrap;
       padding: 10px 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: .88rem;
+      background: #091b29;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .pill {
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      min-height: 70vh;
     }
 
     #map {
       width: 100%;
-      height: 62vh;
-      min-height: 360px;
-      background: #102333;
+      height: 72vh;
+      min-height: 430px;
+      background: #0b1c2a;
+    }
+
+    aside {
+      padding: 14px;
+      background: var(--panel);
+      border-left: 1px solid var(--line);
+      overflow-wrap: anywhere;
+    }
+
+    h2 {
+      font-size: 16px;
+      margin: 0 0 12px;
+    }
+
+    .layer-option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+
+    .layer-option input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .legend-line {
+      display: inline-block;
+      width: 25px;
+      border-top: 3px solid #f7c948;
+    }
+
+    .legend-cone {
+      display: inline-block;
+      width: 20px;
+      height: 14px;
+      background: rgba(240, 90, 90, .3);
+      border: 1px solid #f05a5a;
+    }
+
+    .legend-point {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #53d5f2;
+      border: 2px solid white;
+    }
+
+    .panel-box {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #091b29;
     }
 
     #details {
-      padding: 14px;
-      background: var(--panel);
-      border-top: 1px solid var(--border);
+      font-size: 13px;
+      line-height: 1.55;
     }
 
-    #details h2 {
-      margin-top: 0;
-      font-size: 1.05rem;
+    .data-row {
+      margin: 7px 0;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #203849;
     }
 
-    #properties {
+    .data-label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .data-value {
+      display: block;
+      margin-top: 2px;
       overflow-wrap: anywhere;
-      white-space: pre-wrap;
-      font: 12px/1.55 ui-monospace, monospace;
+    }
+
+    .notice {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .error {
+      color: #ff9d9d;
     }
 
     footer {
       padding: 14px;
+      border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: .78rem;
+      font-size: 12px;
       line-height: 1.6;
     }
 
-    a { color: #7bdcff; }
+    a {
+      color: var(--accent);
+    }
 
     .leaflet-popup-content-wrapper,
     .leaflet-popup-tip {
-      background: #102333;
-      color: #eef6ff;
+      background: #102536;
+      color: #edf6ff;
     }
 
-    .leaflet-container {
-      font-family: system-ui, Arial, sans-serif;
+    .leaflet-popup-content {
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .popup-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 7px;
+    }
+
+    .popup-row {
+      margin: 3px 0;
+    }
+
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        height: 62vh;
+        min-height: 400px;
+      }
+
+      aside {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
     }
   </style>
 </head>
 
 <body>
   <header>
-    <h1>Open Cyclone Tracker</h1>
+    <h1>Hurricane Tracker</h1>
     <div class="subtitle">
-      Atlantico · Caraibi · Golfo del Messico · Pacifico orientale e centrale
+      Tracciamento dei cicloni tropicali · dati ufficiali NOAA/NHC
     </div>
   </header>
 
-  <div class="toolbar">
-    <button id="refresh">Aggiorna dati</button>
-    <button id="world">Vista globale</button>
-    <button id="clear">Deseleziona punto</button>
+  <div class="statusbar">
+    <span class="pill" id="status">Caricamento dati…</span>
+    <span class="pill" id="updated">Aggiornamento: —</span>
+    <span class="pill" id="counts">Elementi: —</span>
   </div>
 
-  <div id="status" role="status" aria-live="polite">
-    Inizializzazione della mappa…
-  </div>
+  <main>
+    <div id="map" aria-label="Mappa dei cicloni tropicali"></div>
 
-  <div id="map" aria-label="Mappa dei punti ciclonici NOAA"></div>
+    <aside>
+      <h2>Livelli della mappa</h2>
 
-  <section id="details">
-    <h2>Dettagli del punto selezionato</h2>
-    <div id="properties">
-      Seleziona un punto sulla mappa per visualizzarne i dati.
-    </div>
-  </section>
+      <label class="layer-option">
+        <input id="toggle-cone" type="checkbox" checked>
+        <span class="legend-cone"></span>
+        Cono d'incertezza
+      </label>
+
+      <label class="layer-option">
+        <input id="toggle-track" type="checkbox" checked>
+        <span class="legend-line"></span>
+        Traiettoria prevista
+      </label>
+
+      <label class="layer-option">
+        <input id="toggle-points" type="checkbox" checked>
+        <span class="legend-point"></span>
+        Posizioni previste
+      </label>
+
+      <div class="panel-box">
+        <h2>Dettagli del ciclone</h2>
+        <div id="details" class="notice">
+          Tocca un punto sulla mappa per leggere i dati disponibili.
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <h2>Informazioni</h2>
+        <div id="feed-notice" class="notice">
+          I dati saranno caricati da storms.json.
+        </div>
+      </div>
+    </aside>
+  </main>
 
   <footer>
-    Fonte dati: <a href="https://www.nhc.noaa.gov/gis/"
-    target="_blank" rel="noopener noreferrer">NOAA / National Hurricane Center</a>.
-    Mappa: © OpenStreetMap contributors.
+    Fonte dati:
+    <a
+      href="https://www.nhc.noaa.gov/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >National Hurricane Center</a>
+    ·
+    <a
+      href="https://www.weather.gov/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >National Weather Service</a>
+    · Mappa di base ©
+    <a
+      href="https://www.openstreetmap.org/copyright"
+      target="_blank"
+      rel="noopener noreferrer"
+    >OpenStreetMap</a>.
+
     <br>
-    I punti provengono dal servizio NOAA/NHC Forecast Points.
-    La loro interpretazione dipende dagli attributi originali della fonte.
-    Questo strumento è informativo e non sostituisce avvisi ufficiali.
+    Il cono rappresenta l'incertezza della previsione della traiettoria,
+    non l'estensione dei venti. Per decisioni di sicurezza segui sempre
+    gli avvisi ufficiali delle autorità meteorologiche.
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -169,82 +313,294 @@
     const map = L.map("map", {
       preferCanvas: true,
       worldCopyJump: true
-    }).setView([20, -65], 3);
+    }).setView([22, -78], 3);
 
     L.tileLayer(
-      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        maxZoom: 8,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        maxZoom: 10,
+        attribution: "&copy; OpenStreetMap contributors"
       }
     ).addTo(map);
 
-    const pointsLayer = L.layerGroup().addTo(map);
+    const statusEl = document.getElementById("status");
+    const updatedEl = document.getElementById("updated");
+    const countsEl = document.getElementById("counts");
+    const detailsEl = document.getElementById("details");
+    const noticeEl = document.getElementById("feed-notice");
 
-    const statusBox = document.getElementById("status");
-    const propertiesBox = document.getElementById("properties");
+    const coneLayer = L.geoJSON(null, {
+      style: {
+        color: "#f05a5a",
+        weight: 1.5,
+        opacity: 0.9,
+        fillColor: "#f05a5a",
+        fillOpacity: 0.20
+      },
+      onEachFeature: function (feature, layer) {
+        layer.bindPopup(makePopup(feature, null));
+        layer.on("click", function () {
+          showDetails(feature, null);
+        });
+      }
+    });
 
-    let loading = false;
+    const trackLayer = L.geoJSON(null, {
+      style: {
+        color: "#f7c948",
+        weight: 3,
+        opacity: 0.95
+      },
+      onEachFeature: function (feature, layer) {
+        layer.bindPopup(makePopup(feature, null));
+        layer.on("click", function () {
+          showDetails(feature, null);
+        });
+      }
+    });
 
-    function setStatus(message) {
-      statusBox.textContent = message;
+    const pointsLayer = L.geoJSON(null, {
+      pointToLayer: function (feature, latlng) {
+        const p = feature.properties || {};
+        const wind = numeric(p.maxwind);
+
+        let fill = "#53d5f2";
+        if (wind !== null && wind >= 64) fill = "#ff7043";
+        if (wind !== null && wind >= 96) fill = "#ed4b75";
+
+        return L.circleMarker(latlng, {
+          radius: 7,
+          color: "#ffffff",
+          weight: 1.5,
+          fillColor: fill,
+          fillOpacity: 0.95
+        });
+      },
+      onEachFeature: function (feature, layer) {
+        layer.bindPopup(makePopup(feature, feature.geometry));
+        layer.on("click", function () {
+          showDetails(feature, feature.geometry);
+        });
+      }
+    });
+
+    const overlayLayers = {
+      cone: coneLayer,
+      track: trackLayer,
+      points: pointsLayer
+    };
+
+    function numeric(value) {
+      if (value === null || value === undefined || value === "") {
+        return null;
+      }
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
     }
 
-    function readable(value) {
+    function safeText(value) {
       if (value === null || value === undefined || value === "") {
         return "Non disponibile";
       }
       return String(value);
     }
 
-    function findProperty(properties, candidates) {
-      const entries = Object.entries(properties || {});
-      for (const candidate of candidates) {
-        const match = entries.find(
-          ([key, value]) =>
-            key.toLowerCase() === candidate.toLowerCase() &&
-            value !== null &&
-            value !== undefined &&
-            value !== ""
-        );
-        if (match) return match[1];
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function firstValue(properties, keys) {
+      for (const key of keys) {
+        const value = properties[key];
+        if (value !== null && value !== undefined && value !== "") {
+          return value;
+        }
       }
       return null;
     }
 
-    function pointLabel(properties) {
-      const name = findProperty(properties, [
-        "stormname", "storm_name", "name", "storm"
-      ]);
-
-      const period = findProperty(properties, [
-        "fcstprd", "forecast_hour", "tau", "hour"
-      ]);
-
-      const title = name ? String(name) : "Punto NOAA";
-      return period !== null
-        ? title + " — periodo " + period
-        : title;
+    function stormName(properties) {
+      return firstValue(properties, [
+        "stormname", "name", "storm_name"
+      ]) || "Ciclone senza nome disponibile";
     }
 
-    function showDetails(feature, lat, lon) {
-      const properties = feature.properties || {};
-
-      propertiesBox.textContent =
-        "Latitudine: " + lat.toFixed(4) + "\n" +
-        "Longitudine: " + lon.toFixed(4) + "\n\n" +
-        JSON.stringify(properties, null, 2);
+    function formatWind(properties) {
+      const wind = numeric(properties.maxwind);
+      if (wind === null) return "Non disponibile";
+      return wind + " kt";
     }
 
-    function clearPoints() {
-      pointsLayer.clearLayers();
+    function formatPressure(properties) {
+      const pressure = numeric(properties.mslp);
+      if (pressure === null) return "Non disponibile";
+      return pressure + " hPa";
     }
+
+    function formatCategory(properties) {
+      const category = numeric(properties.ssnum);
+      if (category === null || category <= 0) {
+        return "Non classificato / non disponibile";
+      }
+      return "Categoria " + category;
+    }
+
+    function formatForecast(properties) {
+      const hours = numeric(properties.fcstprd);
+      if (hours === null) return "Non disponibile";
+      return hours + " ore";
+    }
+
+    function makePopup(feature, geometry) {
+      const p = feature.properties || {};
+      const title = stormName(p);
+      const type = firstValue(p, ["stormtype", "dvlbl", "stormsrc"]);
+      const basin = p.basin;
+      const date = firstValue(p, ["fldatelbl", "validtime", "datelbl"]);
+      const wind = formatWind(p);
+      const pressure = formatPressure(p);
+      const category = formatCategory(p);
+      const forecast = formatForecast(p);
+
+      let coordinates = "";
+      if (
+        geometry &&
+        geometry.type === "Point" &&
+        Array.isArray(geometry.coordinates)
+      ) {
+        const lon = Number(geometry.coordinates[0]);
+        const lat = Number(geometry.coordinates[1]);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          coordinates =
+            '<div class="popup-row"><b>Posizione:</b> ' +
+            lat.toFixed(3) + ", " + lon.toFixed(3) + "</div>";
+        }
+      }
+
+      return (
+        '<div class="popup-title">' + escapeHtml(title) + "</div>" +
+        '<div class="popup-row"><b>Tipo:</b> ' +
+          escapeHtml(safeText(type)) + "</div>" +
+        '<div class="popup-row"><b>Bacino:</b> ' +
+          escapeHtml(safeText(basin)) + "</div>" +
+        '<div class="popup-row"><b>Vento massimo:</b> ' +
+          escapeHtml(wind) + "</div>" +
+        '<div class="popup-row"><b>Categoria:</b> ' +
+          escapeHtml(category) + "</div>" +
+        '<div class="popup-row"><b>Pressione:</b> ' +
+          escapeHtml(pressure) + "</div>" +
+        '<div class="popup-row"><b>Periodo previsto:</b> ' +
+          escapeHtml(forecast) + "</div>" +
+        '<div class="popup-row"><b>Validità:</b> ' +
+          escapeHtml(safeText(date)) + "</div>" +
+        coordinates
+      );
+    }
+
+    function addRow(label, value) {
+      const row = document.createElement("div");
+      row.className = "data-row";
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "data-label";
+      labelEl.textContent = label;
+
+      const valueEl = document.createElement("span");
+      valueEl.className = "data-value";
+      valueEl.textContent = safeText(value);
+
+      row.appendChild(labelEl);
+      row.appendChild(valueEl);
+      detailsEl.appendChild(row);
+    }
+
+    function showDetails(feature, geometry) {
+      const p = feature.properties || {};
+      detailsEl.textContent = "";
+
+      addRow("Nome", stormName(p));
+      addRow("Tipo di sistema", firstValue(
+        p, ["stormtype", "dvlbl", "stormsrc"]
+      ));
+      addRow("Bacino", p.basin);
+      addRow("Vento massimo", formatWind(p));
+      addRow("Raffiche", p.gust == null ? null : p.gust + " kt");
+      addRow("Categoria Saffir-Simpson", formatCategory(p));
+      addRow("Pressione al livello del mare", formatPressure(p));
+      addRow("Periodo previsionale", formatForecast(p));
+      addRow("Data/ora di validità", firstValue(
+        p, ["fldatelbl", "validtime", "datelbl"]
+      ));
+      addRow("Bollettino NOAA", p.advisnum);
+      addRow("Direzione di movimento (dato sorgente)", p.tcdir);
+      addRow("Velocità di movimento (dato sorgente)", p.tcspd);
+
+      if (
+        geometry &&
+        geometry.type === "Point" &&
+        Array.isArray(geometry.coordinates)
+      ) {
+        const lon = Number(geometry.coordinates[0]);
+        const lat = Number(geometry.coordinates[1]);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          addRow("Latitudine", lat.toFixed(4));
+          addRow("Longitudine", lon.toFixed(4));
+        }
+      }
+    }
+
+    function setStatus(message, isError) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", Boolean(isError));
+    }
+
+    function getFeatures(data, name) {
+      const layer = data &&
+        data.layers &&
+        data.layers[name];
+
+      if (!layer || !Array.isArray(layer.features)) {
+        return [];
+      }
+      return layer.features;
+    }
+
+    function setLayerVisibility(layer, visible) {
+      if (visible) {
+        if (!map.hasLayer(layer)) layer.addTo(map);
+      } else if (map.hasLayer(layer)) {
+        map.removeLayer(layer);
+      }
+    }
+
+    document.getElementById("toggle-cone").addEventListener(
+      "change",
+      function (event) {
+        setLayerVisibility(coneLayer, event.target.checked);
+      }
+    );
+
+    document.getElementById("toggle-track").addEventListener(
+      "change",
+      function (event) {
+        setLayerVisibility(trackLayer, event.target.checked);
+      }
+    );
+
+    document.getElementById("toggle-points").addEventListener(
+      "change",
+      function (event) {
+        setLayerVisibility(pointsLayer, event.target.checked);
+      }
+    );
 
     async function loadData() {
-      if (loading) return;
-
-      loading = true;
-      setStatus("Recupero del file dati…");
+      setStatus("Caricamento NOAA…", false);
 
       try {
         const response = await fetch(
@@ -253,119 +609,101 @@
         );
 
         if (!response.ok) {
-          throw new Error("HTTP " + response.status);
+          throw new Error(
+            "HTTP " + response.status +
+            ". Controlla che storms.json sia pubblicato."
+          );
         }
 
         const data = await response.json();
 
-        if (
-          data.status !== "ok" ||
-          !Array.isArray(data.features) ||
-          !Number.isFinite(data.count)
-        ) {
-          throw new Error("Formato storms.json non valido");
+        if (data.status !== "ok" || !data.layers) {
+          throw new Error("Formato dati non riconosciuto.");
         }
 
-        clearPoints();
+        const points = getFeatures(data, "forecast_points");
+        const tracks = getFeatures(data, "forecast_track");
+        const cones = getFeatures(data, "forecast_cone");
 
-        let plotted = 0;
-
-        for (const feature of data.features) {
-          const coords = feature.geometry?.coordinates;
-
-          if (
-            !Array.isArray(coords) ||
-            coords.length < 2 ||
-            !Number.isFinite(Number(coords[0])) ||
-            !Number.isFinite(Number(coords[1]))
-          ) {
-            continue;
-          }
-
-          const lon = Number(coords[0]);
-          const lat = Number(coords[1]);
-
-          if (
-            lon < -180 || lon > 180 ||
-            lat < -90 || lat > 90
-          ) {
-            continue;
-          }
-
-          const label = pointLabel(feature.properties);
-
-          const marker = L.circleMarker([lat, lon], {
-            radius: 6,
-            color: "#ffffff",
-            weight: 1,
-            fillColor: "#ffb703",
-            fillOpacity: 0.9
-          });
-
-          marker.bindPopup(
-            "<strong>" +
-            label.replace(/[&<>"']/g, c => ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;"
-            }[c])) +
-            "</strong><br>" +
-            lat.toFixed(2) + ", " + lon.toFixed(2)
-          );
-
-          marker.on("click", () => {
-            showDetails(feature, lat, lon);
-          });
-
-          marker.addTo(pointsLayer);
-          plotted++;
+        if (points.length === 0 &&
+            tracks.length === 0 &&
+            cones.length === 0) {
+          setStatus("Feed caricato: nessun elemento", false);
+        } else {
+          setStatus("Dati NOAA caricati", false);
         }
 
-        const updated = data.updated_utc
+        pointsLayer.clearLayers();
+        trackLayer.clearLayers();
+        coneLayer.clearLayers();
+
+        pointsLayer.addData({
+          type: "FeatureCollection",
+          features: points
+        });
+
+        trackLayer.addData({
+          type: "FeatureCollection",
+          features: tracks
+        });
+
+        coneLayer.addData({
+          type: "FeatureCollection",
+          features: cones
+        });
+
+        setLayerVisibility(
+          coneLayer,
+          document.getElementById("toggle-cone").checked
+        );
+        setLayerVisibility(
+          trackLayer,
+          document.getElementById("toggle-track").checked
+        );
+        setLayerVisibility(
+          pointsLayer,
+          document.getElementById("toggle-points").checked
+        );
+
+        const stamp = data.updated_utc
           ? new Date(data.updated_utc).toLocaleString()
           : "Non disponibile";
 
-        setStatus(
-          "Feed NOAA acquisito. Punti nel JSON: " +
-          data.count +
-          " · Punti visualizzati: " + plotted +
-          " · Ultimo aggiornamento backend: " + updated
-        );
+        updatedEl.textContent = "Dati scaricati: " + stamp;
 
-        if (plotted === 0) {
-          propertiesBox.textContent =
-            "Il feed non contiene punti visualizzabili. " +
-            "Questo può indicare assenza di punti nel servizio oppure " +
-            "una variazione dei dati restituiti. Controllare il workflow " +
-            "GitHub Actions e il feed ufficiale NOAA.";
+        countsEl.textContent =
+          "Punti: " + points.length +
+          " · Tracce: " + tracks.length +
+          " · Coni: " + cones.length;
+
+        noticeEl.textContent = data.notice ||
+          "Dati forniti dal servizio NOAA/NHC.";
+
+        // Adatta la mappa ai punti quando sono disponibili.
+        const bounds = pointsLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds.pad(0.25), { maxZoom: 5 });
+        } else {
+          map.setView([22, -78], 3);
         }
+
+        if (points.length === 0) {
+          detailsEl.textContent =
+            "Il feed non contiene punti previsionali al momento. " +
+            "Verifica gli avvisi ufficiali NOAA/NHC.";
+        }
+
       } catch (error) {
-        setStatus(
-          "Errore nel caricamento dei dati: " +
-          error.message +
-          ". Verifica che storms.json sia pubblicato insieme a index.html."
-        );
-      } finally {
-        loading = false;
+        console.error("Errore caricamento tracker:", error);
+        setStatus("Errore nel caricamento", true);
+        detailsEl.textContent =
+          "Impossibile leggere i dati. " + error.message;
+        noticeEl.textContent =
+          "Verifica che il workflow GitHub sia riuscito e che " +
+          "storms.json sia disponibile nella stessa cartella " +
+          "della pagina pubblicata.";
       }
     }
-
-    document.getElementById("refresh").addEventListener(
-      "click", loadData
-    );
-
-    document.getElementById("world").addEventListener(
-      "click", () => map.setView([20, -65], 3)
-    );
-
-    document.getElementById("clear").addEventListener(
-      "click", () => {
-        propertiesBox.textContent =
-          "Seleziona un punto sulla mappa per visualizzarne i dati.";
-      }
-    );
 
     loadData();
   </script>
