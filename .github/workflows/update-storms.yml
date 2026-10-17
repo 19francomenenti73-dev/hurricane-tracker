@@ -1,31 +1,67 @@
 name: Aggiornamento Automatico Cicloni
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 */12 * * *' # Esegue il task automaticamente ogni 12 ore
-  workflow_dispatch:      # Mantiene anche la possibilità di esecuzione manuale
+    - cron: "7,37 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aggiornamento-cicloni
+  cancel-in-progress: false
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 5
+
     steps:
       - name: Checkout del repository
         uses: actions/checkout@v4
 
-      - name: Configurazione di Python
+      - name: Configurazione Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.12"
 
-      - name: Esecuzione motore di recupero dati
+      - name: Esecuzione motore NOAA
         run: python engine.py
 
-      - name: Commit e Push dei dati aggiornati
+      - name: Verifica JSON generato
         run: |
-          git config --global user.name "GitHub Action Bot"
-          git config --global user.email "bot@users.noreply.github.com"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("storms.json")
+          if not path.exists():
+              raise SystemExit("ERRORE: storms.json non esiste")
+
+          data = json.loads(path.read_text(encoding="utf-8"))
+
+          if data.get("status") != "ok":
+              raise SystemExit("ERRORE: stato acquisizione non valido")
+
+          if not isinstance(data.get("features"), list):
+              raise SystemExit("ERRORE: features non è una lista")
+
+          if data.get("count") != len(data["features"]):
+              raise SystemExit("ERRORE: conteggio incoerente")
+
+          print("JSON valido. Punti:", data["count"])
+          PY
+
+      - name: Commit e push dei dati
+        run: |
+          git config user.name "GitHub Action Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add storms.json
-          git diff --staged --quiet || (git commit -m "Aggiornamento automatico dati tempeste [skip ci]" && git push)
-          
+
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica ai dati."
+          else
+            git commit -m "Aggiornamento dati ciclonici NOAA"
+            git push
+          fi
