@@ -1,5 +1,346 @@
 {
-  "status": "success",
-  "count": 0,
-  "storms": []
+  "source": "NOAA/NHC ArcGIS REST - Forecast Points",
+  "source_url": "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/5/query",
+  "updated_utc": "2026-10-17T05:00:16.375575+00:00",
+  "count": 8,
+  "status": "ok",
+  "notice": "Punti ufficiali del servizio NHC. Le proprietà originali sono conservate; interpretare i campi secondo i metadati NOAA.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 6190,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -102.50000000009982,
+          15.200000000299895
+        ]
+      },
+      "properties": {
+        "objectid": 6190,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "HU",
+        "dvlbl": "H",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 100,
+        "maxwind": 80,
+        "mslp": 979,
+        "ssnum": 1,
+        "datelbl": "9:00 PM Fri",
+        "tcdvlp": "Hurricane",
+        "tcdir": 350,
+        "tcspd": 6,
+        "fldatelbl": "2026-10-16 6:00 PM Fri CST",
+        "lat": 15,
+        "lon": -102,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "17/0000",
+        "tau": 0,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6191,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -103.40000000009985,
+          16.299999999900194
+        ]
+      },
+      "properties": {
+        "objectid": 6191,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "HU",
+        "dvlbl": "H",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 110,
+        "maxwind": 90,
+        "mslp": 9999,
+        "ssnum": 2,
+        "datelbl": "6:00 AM Sat",
+        "tcdvlp": "Hurricane",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-17 6:00 AM Sat CST",
+        "lat": 16,
+        "lon": -103,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "17/1200",
+        "tau": 12,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6192,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -104.39999999989999,
+          17.699999999800298
+        ]
+      },
+      "properties": {
+        "objectid": 6192,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "HU",
+        "dvlbl": "H",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 110,
+        "maxwind": 90,
+        "mslp": 9999,
+        "ssnum": 2,
+        "datelbl": "6:00 PM Sat",
+        "tcdvlp": "Hurricane",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-17 6:00 PM Sat CST",
+        "lat": 18,
+        "lon": -104,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "18/0000",
+        "tau": 24,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6193,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -105.29999999989997,
+          18.99999999990024
+        ]
+      },
+      "properties": {
+        "objectid": 6193,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "HU",
+        "dvlbl": "H",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 100,
+        "maxwind": 80,
+        "mslp": 9999,
+        "ssnum": 1,
+        "datelbl": "6:00 AM Sun",
+        "tcdvlp": "Hurricane",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-18 6:00 AM Sun CST",
+        "lat": 19,
+        "lon": -105,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "18/1200",
+        "tau": 36,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6194,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -106.10000000009984,
+          19.99999999970038
+        ]
+      },
+      "properties": {
+        "objectid": 6194,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "HU",
+        "dvlbl": "H",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 90,
+        "maxwind": 75,
+        "mslp": 9999,
+        "ssnum": 1,
+        "datelbl": "6:00 PM Sun",
+        "tcdvlp": "Hurricane",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-18 6:00 PM Sun CST",
+        "lat": 20,
+        "lon": -106,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "19/0000",
+        "tau": 48,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6195,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -106.79999999960023,
+          20.60000000029993
+        ]
+      },
+      "properties": {
+        "objectid": 6195,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "TS",
+        "dvlbl": "S",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 75,
+        "maxwind": 60,
+        "mslp": 9999,
+        "ssnum": 0,
+        "datelbl": "6:00 AM Mon",
+        "tcdvlp": "Tropical Storm",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-19 6:00 AM Mon CST",
+        "lat": 21,
+        "lon": -107,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "19/1200",
+        "tau": 60,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6196,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -107.59999999980005,
+          20.899999999700356
+        ]
+      },
+      "properties": {
+        "objectid": 6196,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "TS",
+        "dvlbl": "S",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 55,
+        "maxwind": 45,
+        "mslp": 9999,
+        "ssnum": 0,
+        "datelbl": "6:00 PM Mon",
+        "tcdvlp": "Tropical Storm",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-19 6:00 PM Mon CST",
+        "lat": 21,
+        "lon": -108,
+        "stormnum": 21,
+        "stormsrc": "Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "20/0000",
+        "tau": 72,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6197,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -108.80000000009983,
+          21.299999999800264
+        ]
+      },
+      "properties": {
+        "objectid": 6197,
+        "stormname": "Hurricane Trudy",
+        "stormtype": "STD",
+        "dvlbl": "D",
+        "basin": "EP",
+        "advdate": "900 PM CST Fri Oct 16 2026",
+        "advisnum": "15",
+        "fcstprd": 120,
+        "gust": 40,
+        "maxwind": 30,
+        "mslp": 9999,
+        "ssnum": 0,
+        "datelbl": "6:00 PM Tue",
+        "tcdvlp": "Subtropical Depression",
+        "tcdir": 9999,
+        "tcspd": 9999,
+        "fldatelbl": "2026-10-20 6:00 PM Tue CST",
+        "lat": 21,
+        "lon": -109,
+        "stormnum": 21,
+        "stormsrc": "Post-Tropical Cyclone",
+        "timezone": "CST",
+        "validtime": "21/0000",
+        "tau": 96,
+        "idp_source": "ep212026-015_5day_pts",
+        "idp_subset": "ep212026",
+        "idp_filedate": 1792206504000,
+        "idp_ingestdate": 1792206605000,
+        "binnumber": "EP1"
+      }
+    }
+  ]
 }
