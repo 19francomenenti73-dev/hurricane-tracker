@@ -1,4 +1,5 @@
-name: Aggiornamento Automatico Cicloni
+
+name: Aggiorna dati Hurricane Tracker
 
 on:
   workflow_dispatch:
@@ -9,27 +10,29 @@ permissions:
   contents: write
 
 concurrency:
-  group: aggiornamento-cicloni
+  group: hurricane-tracker-update
   cancel-in-progress: false
 
 jobs:
-  update-data:
+  update:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Checkout del repository
+      - name: Scarica repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
-      - name: Configurazione Python
+      - name: Configura Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Esecuzione motore NOAA
+      - name: Recupera i dati NOAA
         run: python engine.py
 
-      - name: Verifica JSON generato
+      - name: Verifica il JSON prodotto
         run: |
           python - <<'PY'
           import json
@@ -42,26 +45,38 @@ jobs:
           data = json.loads(path.read_text(encoding="utf-8"))
 
           if data.get("status") != "ok":
-              raise SystemExit("ERRORE: stato acquisizione non valido")
+              raise SystemExit("ERRORE: stato del JSON non valido")
 
-          if not isinstance(data.get("features"), list):
-              raise SystemExit("ERRORE: features non è una lista")
+          layers = data.get("layers")
+          if not isinstance(layers, dict):
+              raise SystemExit("ERRORE: livelli mancanti")
 
-          if data.get("count") != len(data["features"]):
-              raise SystemExit("ERRORE: conteggio incoerente")
+          for name in (
+              "forecast_points",
+              "forecast_track",
+              "forecast_cone",
+          ):
+              layer = layers.get(name)
+              if not isinstance(layer, dict):
+                  raise SystemExit(f"ERRORE: livello {name} mancante")
+              if layer.get("type") != "FeatureCollection":
+                  raise SystemExit(f"ERRORE: GeoJSON {name} non valido")
+              if not isinstance(layer.get("features"), list):
+                  raise SystemExit(f"ERRORE: features {name} non valide")
 
-          print("JSON valido. Punti:", data["count"])
+          print("JSON valido.")
+          print("Conteggi:", data.get("counts", {}))
           PY
 
-      - name: Commit e push dei dati
+      - name: Pubblica i dati aggiornati
         run: |
-          git config user.name "GitHub Action Bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add storms.json
-
           if git diff --cached --quiet; then
-            echo "Nessuna modifica ai dati."
+            echo "Nessuna modifica ai dati da pubblicare."
           else
-            git commit -m "Aggiornamento dati ciclonici NOAA"
+            git commit -m "Aggiorna dati NOAA Hurricane Tracker"
             git push
           fi
+          
