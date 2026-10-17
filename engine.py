@@ -1,112 +1,178 @@
-# engine.py
+
 import json
 import os
 import sys
 import tempfile
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
-API_URL = (
+BASE_URL = (
     "https://mapservices.weather.noaa.gov/tropical/rest/services/"
-    "tropical/NHC_tropical_weather_summary/MapServer/5/query"
+    "tropical/NHC_tropical_weather_summary/MapServer"
 )
-OUTPUT = "storms.json"
-TIMEOUT = 35
+
+OUTPUT_FILE = "storms.json"
+TIMEOUT_SECONDS = 45
+
+LAYERS = {
+    "forecast_points": 5,
+    "forecast_track": 6,
+    "forecast_cone": 7,
+}
 
 
-def fetch_data():
-    params = urlencode({
+def fetch_layer(layer_id):
+    """Scarica un livello GeoJSON dal servizio ufficiale NOAA/NHC."""
+    query_url = f"{BASE_URL}/{layer_id}/query"
+
+    params = {
         "where": "1=1",
         "outFields": "*",
         "returnGeometry": "true",
         "outSR": "4326",
         "f": "geojson",
-    })
-    request = Request(
-        f"{API_URL}?{params}",
+    }
+
+    url = query_url + "?" + urllib.parse.urlencode(params)
+
+    request = urllib.request.Request(
+        url,
         headers={
-            "User-Agent": "OpenCycloneTracker/1.0 (educational non-profit project)",
+            "User-Agent": "OpenSource-Hurricane-Tracker/1.0",
             "Accept": "application/geo+json, application/json",
         },
     )
 
-    try:
-        with urlopen(request, timeout=TIMEOUT) as response:
-            if response.status != 200:
-                raise RuntimeError(f"HTTP inatteso: {response.status}")
-            data = json.loads(response.read().decode("utf-8"))
-    except HTTPError as exc:
-        raise RuntimeError(f"Errore NOAA HTTP {exc.code}: {exc.reason}") from exc
-    except URLError as exc:
-        raise RuntimeError(f"Errore di rete NOAA: {exc.reason}") from exc
-    except (TimeoutError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"Risposta NOAA non valida o timeout: {exc}") from exc
+    with urllib.request.urlopen(
+        request, timeout=TIMEOUT_SECONDS
+    ) as response:
+        raw = response.read().decode("utf-8")
 
-    if not isinstance(data, dict) or data.get("type") != "FeatureCollection":
-        raise RuntimeError("NOAA non ha restituito una FeatureCollection GeoJSON.")
+    data = json.loads(raw)
+
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Risposta inattesa per il livello {layer_id}"
+        )
+
+    # Alcuni servizi ArcGIS restituiscono errori in formato JSON.
+    if "error" in data:
+        raise RuntimeError(
+            f"Errore NOAA livello {layer_id}: "
+            f"{json.dumps(data['error'], ensure_ascii=False)}"
+        )
+
+    if data.get("type") != "FeatureCollection":
+        raise ValueError(
+            f"Il livello {layer_id} non ha restituito "
+            "una FeatureCollection GeoJSON valida."
+        )
 
     features = data.get("features")
     if not isinstance(features, list):
-        raise RuntimeError("Il campo features manca o non è una lista.")
+        raise ValueError(
+            f"Elenco features mancante nel livello {layer_id}"
+        )
 
-    # Verifica che il feed sia interpretabile, senza inventare dati.
+    # Mantiene soltanto elementi con geometria e proprietà valide.
+    valid_features = []
     for feature in features:
-        geometry = feature.get("geometry") or {}
-        if geometry.get("type") != "Point":
-            raise RuntimeError("Geometria inattesa nel feed dei punti NOAA.")
-        coords = geometry.get("coordinates") or []
-        if len(coords) < 2:
-            raise RuntimeError("Coordinate mancanti in un punto NOAA.")
-        lon, lat = coords[0], coords[1]
-        if not (-180 <= lon <= 180 and -90 <= lat <= 90):
-            raise RuntimeError("Coordinate geografiche non valide.")
+        if not isinstance(feature, dict):
+            continue
+        if not isinstance(feature.get("properties"), dict):
+            feature["properties"] = {}
+        if not isinstance(feature.get("geometry"), dict):
+            continue
+        if not feature["geometry"].get("type"):
+            continue
+        valid_features.append(feature)
 
-    return features
+    data["features"] = valid_features
+    return data
 
 
-def atomic_write(data):
-    folder = os.path.dirname(os.path.abspath(OUTPUT))
-    fd, temp_path = tempfile.mkstemp(prefix="storms_", suffix=".tmp", dir=folder)
+def build_output():
+    result = {
+        "source": "NOAA / National Hurricane Center",
+        "source_url": BASE_URL,
+        "updated_utc": datetime.now(timezone.utc).isoformat(),
+        "status": "ok",
+        "notice": (
+            "Dati ufficiali NOAA/NHC. Le previsioni possono cambiare. "
+            "Il cono indica incertezza della traiettoria, non l'area "
+            "esatta dei venti o dei danni."
+        ),
+        "layers": {},
+        "counts": {},
+    }
+
+    # Se uno dei livelli fallisce, il processo si interrompe:
+    # non pubblica silenziosamente un aggiornamento incompleto.
+    for name, layer_id in LAYERS.items():
+        print(f"Scaricamento livello {layer_id}: {name}")
+        geojson = fetch_layer(layer_id)
+        result["layers"][name] = geojson
+        result["counts"][name] = len(geojson["features"])
+        print(
+            f"  Elementi validi: "
+            f"{result['counts'][name]}"
+        )
+
+    result["count"] = sum(result["counts"].values())
+    return result
+
+
+def save_atomically(data):
+    directory = os.path.dirname(os.path.abspath(OUTPUT_FILE))
+    os.makedirs(directory, exist_ok=True)
+
+    fd, temporary_path = tempfile.mkstemp(
+        prefix="storms_",
+        suffix=".tmp",
+        dir=directory,
+    )
+
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, ensure_ascii=False, indent=2)
-            handle.write("\n")
-        os.replace(temp_path, OUTPUT)
-    except Exception:
-        try:
-            os.unlink(temp_path)
-        except OSError:
-            pass
-        raise
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            json.dump(
+                data,
+                file,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            file.write("\n")
+
+        os.replace(temporary_path, OUTPUT_FILE)
+    finally:
+        if os.path.exists(temporary_path):
+            os.remove(temporary_path)
 
 
 def main():
-    print("Recupero dei punti ciclonici dal servizio NOAA/NHC...")
-    features = fetch_data()
+    try:
+        data = build_output()
+        save_atomically(data)
 
-    result = {
-        "source": "NOAA/NHC ArcGIS REST - Forecast Points",
-        "source_url": API_URL,
-        "updated_utc": datetime.now(timezone.utc).isoformat(),
-        "count": len(features),
-        "status": "ok",
-        "notice": (
-            "Punti ufficiali del servizio NHC. Le proprietà originali sono "
-            "conservate; interpretare i campi secondo i metadati NOAA."
-        ),
-        "features": features,
-    }
+        print(
+            "Aggiornamento completato. Elementi totali: "
+            f"{data['count']}"
+        )
+        print(f"Conteggi per livello: {data['counts']}")
 
-    atomic_write(result)
-    print(f"Acquisizione verificata. Punti salvati: {len(features)}")
-    print(f"File aggiornato: {OUTPUT}")
+        # Un risultato vuoto può significare che non ci sono
+        # sistemi attivi nel feed; lo segnaliamo chiaramente.
+        if data["count"] == 0:
+            print(
+                "AVVISO: NOAA ha restituito zero elementi "
+                "in tutti e tre i livelli."
+            )
+
+    except Exception as error:
+        print(f"ERRORE aggiornamento NOAA: {error}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        print(f"ERRORE FATALE: {exc}", file=sys.stderr)
-        sys.exit(1)
+    main()
+    
